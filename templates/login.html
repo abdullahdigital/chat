@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Login - Django Chat
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom CSS for form styling */
+    .card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .card-header {
+        background-color: #4CAF50;
+        color: white;
+        font-weight: bold;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    .btn-custom {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-custom:hover {
+        background-color: #45a049;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Login</div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-custom mt-2">Login</button>
+                    </form>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('login-form');
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            clearErrors();
+    
+            let username = document.getElementById('loginusername').value.trim();
+            let password = document.getElementById('loginpassword').value;
+    
+            let errors = [];
+    
+            // Validate username
+            if (username === '') {
+                errors.push({ field: 'loginusername', message: 'Username is required.' });
+            }
+    
+            // Validate password
+            if (password === '') {
+                errors.push({ field: 'loginpassword', message: 'Password is required.' });
+            }
+    
+            // Display errors
+            errors.forEach(error => {
+                let errorField = document.getElementById(`${error.field}-error`);
+                if (errorField) {
+                    errorField.textContent = error.message;
+                }
+            });
+    
+            // Submit form if no errors
+            if (errors.length === 0) {
+                form.submit();
+            }
+        });
+    
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(error => {
+                error.textContent = '';
+            });
+        }
+    });
+</script>
+{% endblock %}

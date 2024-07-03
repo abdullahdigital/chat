@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Abdullah's Whatsapp
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div align="center">
+        <h2>Abdullah's Whatsapp</h2>
+        <p>A chat for for everyone especially hackers to communicate freely!</p>
+    </div>
+
+    <div class="container">
+        <form id="post-form" method="POST" action="{% url 'checkview' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="room_name" class="form-label">Room Name</label>
+                <input type="text" name="room_name" id="room_name" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" name="username" id="username" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-custom">Enter Room</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

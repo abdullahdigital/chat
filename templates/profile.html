@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Profile - Django Chat{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Profile</div>
+                <div class="card-body">
+                    {% if profile_message %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ profile_message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                    <form id="profileForm" method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_profile_pic">Profile Picture</label>
+                            <input type="file" name="profile_pic" class="form-control-file" id="id_profile_pic">
+                            {% if profile.profile_pic %}
+                                <img src="{{ profile.profile_pic.url }}" class="img-fluid border rounded-circle mt-2" alt="Profile Picture">
+                            {% endif %}
+                        </div>
+                        <div class="form-group">
+                            <label for="id_bio">Bio</label>
+                            <textarea class="form-control" name="bio" id="id_bio">{{ profile.bio }}</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_marital_status">Marital Status</label>
+                            <input type="text" class="form-control" name="marital_status" id="id_marital_status" value="{{ profile.marital_status }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_number">Number</label>
+                            <input type="text" class="form-control" name="number" id="id_number" value="{{ profile.number }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_dob">Date of Birth</label>
+                            <input type="date" class="form-control" name="dob" id="id_dob" value="{% if profile.dob %}{{ profile.dob|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_country">Country</label>
+                            <input type="text" class="form-control" name="country" id="id_country" value="{{ profile.country }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_city">City</label>
+                            <input type="text" class="form-control" name="city" id="id_city" value="{{ profile.city }}">
+                        </div>
+                        <button type="submit" class="btn btn-custom mt-3">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        {% if profile_message %}
+            setTimeout(function() {
+                $('.alert').alert('close');
+            }, 10000);
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {{ room }} - DjChat
+{% endblock %}
+
+{% block content %}
+<div class="chat-wrapper">
+    <div align="center">
+        <h2>{{ room }} - DjChat</h2>
+    </div>
+
+    <div id="display" class="container mt-4 chat-box">
+        <!-- Messages will be dynamically added here -->
+    </div>
+
+    <div class="container mt-4">
+        <form id="post-form">
+            {% csrf_token %}
+            <input type="hidden" name="username" id="username" value="{{ username }}">
+            <input type="hidden" name="room_id" id="room_id" value="{{ room_details.id }}">
+            <div class="input-group">
+                <input type="text" name="message" id="message" class="form-control" placeholder="Type your message..." required>
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-custom btn-lg" aria-pressed="true">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<audio id="notification-sound" src="{% static 'chat/img/notification.mp3' %}" preload="auto"></audio>
+
+<style>
+    .chat-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+    }
+
+    .chat-box {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        height: 400px;
+        overflow-y: scroll;
+        width: 100%;
+    }
+
+    .message {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .message-user {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        margin-bottom: 10px;
+    }
+
+    .message img {
+        border-radius: 50%;
+        width: 40px; /* Adjust the width as needed */
+        height: 40px; /* Adjust the height as needed */
+        margin-right: 10px;
+    }
+
+    .message-user img {
+        border-radius: 50%;
+        width: 40px; /* Adjust the width as needed */
+        height: 40px; /* Adjust the height as needed */
+        margin-right: 10px;
+    }
+
+    .message-content {
+        background-color: #f1f1f1;
+        padding: 10px;
+        border-radius: 10px;
+        max-width: 70%;
+        word-wrap: break-word;
+    }
+
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+    }
+
+    .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        margin: 0 2px;
+        background-color: #ccc;
+        border-radius: 50%;
+        display: inline-block;
+        animation: typing 1s infinite ease-in-out;
+    }
+
+    @keyframes typing {
+        0%, 60%, 100% {
+            transform: translateY(0);
+        }
+        30% {
+            transform: translateY(-8px);
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        loadMessages();
+    });
+
+    function loadMessages() {
+        const display = document.getElementById('display');
+        display.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+
+        const roomName = "{{ room }}";
+        fetch(`/getMessages/${roomName}`)
+            .then(response => response.json())
+            .then(data => {
+                display.innerHTML = '';  // Clear loading indicator
+                data.messages.forEach(message => {
+                    displayMessage(message);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching messages:', error);
+                display.innerHTML = '<div class="alert alert-danger" role="alert">Failed to fetch messages. Please try again later.</div>';
+            });
+    }
+
+    function displayMessage(message) {
+        const display = document.getElementById('display');
+        const messageElement = document.createElement('div');
+        const username = "{{ username }}";
+
+        if (message.user === username) {
+            messageElement.classList.add('message-user');
+        } else {
+            messageElement.classList.add('message');
+        }
+
+        const imgElement = document.createElement('img');
+        imgElement.src = message.profile_pic ? message.profile_pic : '{% static "chat/img/icon.png" %}';
+        imgElement.alt = 'Profile Picture';
+        imgElement.classList.add('profile-img');
+
+        const contentElement = document.createElement('div');
+        contentElement.classList.add('message-content');
+        contentElement.innerHTML = `<strong>${message.user}</strong>: ${twemoji.parse(message.value)}`;
+
+        messageElement.appendChild(imgElement);
+        messageElement.appendChild(contentElement);
+
+        display.appendChild(messageElement);
+        display.scrollTop = display.scrollHeight;
+
+        // Play notification sound if the message is not from the current user
+        if (message.user !== username) {
+            playNotificationSound();
+        }
+    }
+
+    document.querySelector('#post-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageInputDom = document.querySelector('#message');
+        const message = messageInputDom.value;
+        const username = document.querySelector('#username').value;
+        const room_id = document.querySelector('#room_id').value;
+
+        fetch('/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                message: message,
+                username: username,
+                room_id: room_id
+            })
+        }).then(response => {
+            messageInputDom.value = '';
+            loadMessages();
+        });
+    });
+
+    function playNotificationSound() {
+        const sound = document.getElementById('notification-sound');
+        sound.play().catch(error => {
+            console.error('Error playing notification sound:', error);
+        });
+    }
+
+    // Typing
+
+    // Define a flag to track typing status
+    let isTyping = false;
+
+    // Event listener to detect typing
+    document.querySelector('#message').addEventListener('keydown', function(e) {
+        if (!isTyping) {
+            // Emit typing event to server or update UI directly
+            // For simplicity, we'll update UI directly here
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('typing-indicator');
+            typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+            document.getElementById('display').appendChild(typingIndicator);
+            isTyping = true;
+        }
+    });
+
+    // Function to clear typing indicator
+    function clearTypingIndicator() {
+        document.querySelectorAll('.typing-indicator').forEach(indicator => {
+            indicator.remove();
+        });
+        isTyping = false;
+    }
+
+    // Event listener for when user stops typing
+    document.querySelector('#message').addEventListener('blur', function(e) {
+        clearTypingIndicator();
+    });
+
+    // Simulate clearing typing indicator after 5 seconds (for demonstration)
+    setTimeout(clearTypingIndicator, 5000);
+
+</script>
+{% endblock %}
